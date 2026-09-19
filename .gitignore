@@ -4,3 +4,4 @@ audio/*.txt
 audio/raw/
 audio/beds/*.wav
 .DS_Store
+audio/atmo_src/

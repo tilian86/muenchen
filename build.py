@@ -23,7 +23,7 @@ def spoken(t):
     t=re.sub(r'\d+',lambda m:year(int(m.group(0))) if 1000<=int(m.group(0))<=2099 else w(int(m.group(0))),t)
     return t
 # ---------- Atmo ----------
-ATMO_SRC=os.environ.get('ATMO_SRC','/private/tmp/claude-501/-Users-florian/20c2f456-7db0-4e8e-9683-25670593eae8/scratchpad/atmo')
+ATMO_SRC=os.environ.get('ATMO_SRC','audio/atmo_src')  # Quellklänge (312 MB, nur lokal, nicht im Repo)
 SRC={ # key: (Quelldatei, Einstieg in Sekunden)  -- Lizenzen in audio/beds/credits.json
  'bells_big':('bells_big.ogg',60),'bells_mid':('bells_mid.ogg',60),'bells_small':('bells_small.ogg',60),
  'peter':('peter.ogg',3),'meistersinger':('meistersinger.ogg',0),'lohengrin':('lohengrin.ogg',0),
