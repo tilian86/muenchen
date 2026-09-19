@@ -1,0 +1,6 @@
+audio/build.log
+images/dl.log
+audio/*.txt
+audio/raw/
+audio/beds/*.wav
+.DS_Store

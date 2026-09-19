@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="theme-color" content="#0f172a">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="München">
+<meta name="color-scheme" content="dark">
+<title>München-Runde – Audio-Stadtführung</title>
+<meta name="description" content="Ausführliche Audio-Stadtführung durch München: 17 Stationen vom Marienplatz über Hofbräuhaus, Residenz, Frauenkirche und Asamkirche zurück zum Alten Peter. Karte, GPS, automatisches Abspielen, Atmo-Klänge.">
+<meta property="og:title" content="München-Runde">
+<meta property="og:description" content="Audio-Stadtführung durch München – 17 Stationen, 4,5 km, ca. 2 Stunden, mit Atmo-Klängen.">
+<meta property="og:image" content="https://tilian86.github.io/muenchen/images/hero.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23f3632d'/%3E%3Ctext x='32' y='43' font-size='32' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EN%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="images/icon-180.png">
+<link href="fonts/fonts.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+--bg:#0f172a;--bg-card:#1e293b;--bg-panel:#1e293b;
+--accent:#f3632d;--accent-dim:#d44d1a;--accent-bg:rgba(243,99,45,.08);--accent-soft:#ffb59d;
+--text:#d2e4fb;--text-2:#8192a7;--text-3:#4a5d73;--success:#4ade80;--blue:#4fc3f7;
+--border:rgba(255,255,255,.06);--border-accent:rgba(243,99,45,.25);
+--r:12px;--r-sm:8px;--r-lg:16px;
+--font-h:'Epilogue',sans-serif;--font-b:'Inter',-apple-system,sans-serif;--font-m:'JetBrains Mono',monospace;
+--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:var(--font-b);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;color-scheme:dark}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:var(--blue)}
+svg.i{width:1em;height:1em;fill:currentColor;display:inline-block;vertical-align:-.12em}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
+
+/* ===== START ===== */
+#start{padding:0 0 calc(var(--safe-bottom) + 32px)}
+.hero{position:relative;height:46vh;min-height:280px;overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover;filter:brightness(.7) saturate(.85)}
+.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 30%,var(--bg) 100%)}
+.hero-text{position:absolute;left:0;right:0;bottom:0;padding:0 1.25rem 1rem;z-index:2}
+.brand{font-family:var(--font-h);font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.brand span{color:var(--text-2);font-weight:600}
+h1{font-family:var(--font-h);font-size:2.6rem;font-weight:800;line-height:.95;text-transform:uppercase;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--accent)}
+.start-body{padding:0 1.25rem;max-width:640px;width:100%;margin:0 auto}
+.lead{color:var(--text-2);font-size:.95rem;line-height:1.55;margin:.75rem 0 1.25rem}
+.facts{display:flex;gap:8px;margin-bottom:1.25rem}
+.fact{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:10px 8px;text-align:center}
+.fact b{display:block;font-family:var(--font-h);font-size:1.15rem;font-weight:800}
+.fact span{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);font-weight:700}
+.btn-primary{width:100%;padding:15px;background:var(--accent);color:#fff;font-family:var(--font-h);font-weight:700;font-size:.95rem;border-radius:var(--r-sm);text-transform:uppercase;letter-spacing:.08em;transition:transform .1s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary:active{transform:scale(.97)}
+.btn-secondary{width:100%;padding:13px;background:transparent;color:var(--accent);font-family:var(--font-h);font-weight:700;font-size:.85rem;border-radius:var(--r-sm);border:1px solid var(--border-accent);text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.section-label{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:1.5rem 0 .6rem;display:flex;align-items:center;gap:6px}
+.anfahrt{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:.85rem;line-height:1.5;color:var(--text-2)}
+.anfahrt b{color:var(--text)}
+.station-list{display:flex;flex-direction:column;gap:6px}
+.st-item{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;text-align:left;width:100%}
+.st-item .num{width:30px;height:30px;border-radius:50%;background:var(--accent-bg);border:1px solid var(--border-accent);color:var(--accent);font-family:var(--font-h);font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.st-item.done .num{background:var(--success);border-color:var(--success);color:#0f172a}
+.st-item .t{flex:1;min-width:0}
+.st-item .t b{display:block;font-family:var(--font-h);font-size:.85rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-item .t span{font-size:.7rem;color:var(--text-3)}
+.st-item .dur{font-family:var(--font-m);font-size:.65rem;color:var(--text-3)}
+.credits{font-size:.62rem;color:var(--text-3);line-height:1.5;margin-top:1.5rem}
+.credits a{color:var(--text-3)}
+
+/* ===== TOUR ===== */
+.game-top{position:fixed;top:0;left:0;right:0;z-index:800;padding:calc(var(--safe-top) + 8px) 12px 8px;background:linear-gradient(var(--bg) 60%,transparent);display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.game-top>*{pointer-events:auto}
+.game-back{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-2);font-size:20px}
+.station-nav{display:flex;align-items:center;gap:8px;flex:1;justify-content:center;overflow:hidden;margin:0 6px}
+.nav-arrow{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:opacity .2s,transform .1s}
+.nav-arrow:active{transform:scale(.9)}
+.nav-arrow:disabled{opacity:.2;pointer-events:none}
+.game-title{font-family:var(--font-h);font-size:.9rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.02em}
+.game-prog{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--accent);font-weight:700;flex-shrink:0;font-family:var(--font-m)}
+.game-prog .bar{width:44px;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.game-prog .bar i{display:block;height:100%;background:var(--accent);width:0}
+.game-map{position:fixed;inset:0;z-index:1}
+#map{width:100%;height:100%;background:#0f172a}
+.leaflet-tile-pane{filter:invert(1) hue-rotate(195deg) brightness(.78) contrast(.92) saturate(.45)}
+.leaflet-control-attribution{background:rgba(15,23,42,.7)!important;color:var(--text-3)!important;font-size:.55rem!important}
+.leaflet-control-attribution a{color:var(--text-2)!important}
+.station-tooltip{background:var(--bg-card)!important;border:1px solid var(--border-accent)!important;color:var(--text)!important;font-family:var(--font-h)!important;font-weight:700!important;font-size:.7rem!important;border-radius:6px!important;box-shadow:none!important}
+.station-tooltip::before{display:none}
+.st-marker{width:26px;height:26px;border-radius:50%;background:var(--bg-card);border:2px solid var(--accent);color:var(--accent);font-family:var(--font-h);font-weight:800;font-size:.75rem;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.st-marker.done{background:var(--success);border-color:var(--success);color:#0f172a}
+.st-marker.current{background:var(--accent);color:#fff;transform:scale(1.25);box-shadow:0 0 0 6px rgba(243,99,45,.25)}
+.user-dot{width:16px;height:16px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 6px rgba(79,195,247,.25)}
+.gps-badge{position:fixed;top:calc(var(--safe-top) + 56px);left:12px;z-index:810;font-size:.62rem;font-family:var(--font-m);color:var(--text-2);background:rgba(15,23,42,.8);border:1px solid var(--border);border-radius:20px;padding:4px 9px;display:flex;align-items:center;gap:5px}
+.gps-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--text-3)}
+.gps-badge.on .dot{background:var(--success)}
+.fab-toggle{position:fixed;bottom:calc(var(--safe-bottom) + 20px);right:16px;z-index:1000;background:var(--accent);color:#fff;padding:12px 20px;border-radius:30px;font-family:var(--font-h);font-weight:700;font-size:.8rem;box-shadow:0 4px 20px rgba(243,99,45,.4);display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.05em;transition:transform .2s}
+.fab-toggle:active{transform:scale(.95)}
+.game-panel{position:fixed;bottom:0;left:0;right:0;z-index:900;background:var(--bg-panel);border-top:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0;height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch;transition:transform .35s cubic-bezier(.4,0,.2,1);padding:0 1.25rem calc(var(--safe-bottom) + 110px);display:flex;flex-direction:column;align-items:center}
+.game-panel>*{max-width:640px;width:100%}
+.game-panel.collapsed{transform:translateY(calc(100% - 52px))}
+.panel-handle-row{display:flex;align-items:center;justify-content:center;padding:14px 4px 10px;cursor:pointer;position:sticky;top:0;background:var(--bg-panel);z-index:2;min-height:52px;user-select:none;-webkit-user-select:none}
+.panel-handle{width:40px;height:4px;background:var(--text-3);border-radius:3px;opacity:.5}
+.station-label{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.station-name{font-family:var(--font-h);font-size:1.5rem;font-weight:800;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:-.01em;line-height:1.05}
+.station-sub{font-size:.75rem;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:.9rem}
+.dist-line{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(79,195,247,.06);border:1px solid rgba(79,195,247,.15);border-radius:var(--r-sm);margin-bottom:.75rem;font-size:.8rem;color:var(--blue);text-decoration:none}
+.dist-line .coords{font-family:var(--font-m);font-size:.7rem;color:var(--text-3);margin-left:auto;white-space:nowrap}
+.dist-line.near{border-color:var(--success);color:var(--success);background:rgba(74,222,128,.08)}
+.station-photo-wrapper{width:100%;aspect-ratio:16/9;margin-bottom:1rem;border-radius:var(--r);background:var(--bg-card);overflow:hidden;position:relative}
+.station-photo-wrapper img{width:100%;height:100%;object-fit:cover;filter:brightness(.85) saturate(.8)}
+.station-photo-wrapper .photo-overlay{position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(15,23,42,.75) 100%)}
+.station-photo-wrapper .photo-credit{position:absolute;right:8px;bottom:6px;font-size:.55rem;color:rgba(210,228,251,.6)}
+.audio-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:4px;transition:border .2s;cursor:pointer}
+.audio-row.playing{border-color:var(--border-accent);background:var(--accent-bg)}
+.audio-icon{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:20px}
+.audio-label{flex:1;font-size:.8rem;font-weight:600}
+.audio-sublabel{font-size:.68rem;color:var(--text-3);font-weight:400;display:block}
+.audio-time{font-size:.68rem;color:var(--text-3);font-family:var(--font-m)}
+.speed-select{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-size:.65rem;font-weight:700;color:var(--text-2);font-family:var(--font-m)}
+.audio-progress{width:100%;height:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.06);border-radius:8px;margin:5px 0 1rem;overflow:hidden;cursor:pointer;position:relative;touch-action:none}
+.audio-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-soft));width:0%;transition:width .05s linear;pointer-events:none}
+.text-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:1rem}
+.text-card .tl{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.text-card p{font-size:.92rem;line-height:1.65;color:var(--text-2)}
+.text-card p+p{margin-top:.7rem}
+.text-card p strong{color:var(--text);font-weight:600}
+.btn-next{width:100%;padding:14px;background:var(--bg-card);border:1px solid var(--border-accent);color:var(--accent);font-family:var(--font-h);font-weight:700;font-size:.85rem;border-radius:var(--r-sm);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-next.finish{background:var(--accent);color:#fff}
+.auto-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px dashed var(--border);border-radius:var(--r-sm);margin:.75rem 0;font-size:.75rem;color:var(--text-2)}
+.switch{width:42px;height:24px;border-radius:12px;background:var(--text-3);position:relative;transition:background .2s;flex-shrink:0}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch.on{background:var(--success)}
+.switch.on::after{transform:translateX(18px)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--safe-top) + 60px);z-index:2000;background:var(--bg-card);border:1px solid var(--border-accent);color:var(--text);padding:10px 16px;border-radius:30px;font-size:.8rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="ic-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+<symbol id="ic-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></symbol>
+<symbol id="ic-prev" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
+<symbol id="ic-next" viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+<symbol id="ic-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+<symbol id="ic-map" viewBox="0 0 24 24"><path d="m20.5 3-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></symbol>
+<symbol id="ic-text" viewBox="0 0 24 24"><path d="M3 18h12v-2H3v2zM3 6v2h18V6H3zm0 7h18v-2H3v2z"/></symbol>
+<symbol id="ic-nav" viewBox="0 0 24 24"><path d="M12 2 4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></symbol>
+<symbol id="ic-pin" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/></symbol>
+<symbol id="ic-car" viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></symbol>
+<symbol id="ic-book" viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+<symbol id="ic-flag" viewBox="0 0 24 24"><path d="M14.4 6 14 4H5v17h2v-7h5.6l.4 2h7V6z"/></symbol>
+</defs>
+</svg>
+
+<!-- ===== START ===== -->
+<div id="start" class="screen active">
+  <div class="hero">
+    <img src="images/hero.jpg" alt="Frauenkirche und Neues Rathaus in München vom Alten Peter aus">
+    <div class="hero-text">
+      <div class="brand">Audio-Stadtführung <span>· Bayern</span></div>
+      <h1>München<br><em>Runde</em></h1>
+    </div>
+  </div>
+  <div class="start-body">
+    <p class="lead">Siebzehn Stationen in einer Schleife ohne Umwege: vom Marienplatz über Alten Peter und Viktualienmarkt zum Hofbräuhaus, zu Oper und Residenz, zur Feldherrnhalle und in den Hofgarten, dann Theatinerkirche, Frauenkirche, Stachus, Sendlinger Tor, Asamkirche und Jakobsplatz, zum Schluss zurück an den Rindermarkt. Mit den Geschichten, die ein guter Stadtführer erzählt: der Affe, der den Kaiser entführte, das Opernhaus, das mit Bier bezahlt wurde, der Teufelstritt, die Mordweihnacht und der König, der nachts lebte. Vor jedem Text ein paar Sekunden Atmosphäre: die Glocken der Frauenkirche, eine Wirtshauskapelle, eine Orgel. Die App spielt jede Station von selbst, sobald du davorstehst.</p>
+    <div class="facts">
+      <div class="fact"><b>17</b><span>Stationen</span></div>
+      <div class="fact"><b>4,5 km</b><span>zu Fuß</span></div>
+      <div class="fact"><b>ca. 2 h</b><span>ohne Eisbach</span></div>
+    </div>
+    <button class="btn-primary" onclick="startTour()"><svg class="i"><use href="#ic-play"/></svg> Runde starten</button>
+    <button class="btn-secondary" onclick="resetTour()" id="resetBtn" style="display:none">Fortschritt zurücksetzen</button>
+
+    <div class="section-label"><svg class="i"><use href="#ic-car"/></svg> Start &amp; Anfahrt</div>
+    <div class="anfahrt">
+      <b>Mit dem Wohnmobil:</b> Während der Wiesn (19.9.–4.10.2026) auf den <b>Oktoberfest-Campingplatz Riem</b>, von dort mit der <b>U2</b> ab Messestadt Ost bis <b>Marienplatz</b> (Umstieg Sendlinger Tor, gut 20 Minuten). Ganzjährig: Campingplatz Thalkirchen, mit der <b>U3</b> 10 Minuten bis Marienplatz. An der Theresienwiese ist Parken und Campen verboten. Start ist die Mariensäule auf dem Marienplatz, die Runde endet am Rindermarkt, 100 Meter vom Start. Kirchen frei (Asamkirche, Frauenkirche, Theatinerkirche), Gruft in St. Michael und Alter-Peter-Turm kosten ein paar Euro. Eisbachwelle optional, rund eine halbe Stunde extra.
+      <div class="audio-row" id="row-s0" onclick="playStation(0,'row-s0')" style="margin-top:10px">
+        <div class="audio-icon"><svg class="i"><use href="#ic-play" id="icon-s0"/></svg></div>
+        <div class="audio-label">Willkommen anhören<span class="audio-sublabel">Anfahrt &amp; wie die App funktioniert</span></div>
+        <span class="audio-time" id="time-s0">2:28</span>
+      </div>
+      <a class="dist-line" style="margin:8px 0 0" href="https://maps.apple.com/?daddr=48.13722,11.57550&dirflg=r" target="_blank" rel="noopener"><svg class="i"><use href="#ic-nav"/></svg> Navigation zum Marienplatz <span class="coords">48.1372, 11.5755</span></a>
+    </div>
+
+    <div class="section-label"><svg class="i"><use href="#ic-pin"/></svg> Die Stationen</div>
+    <div class="station-list" id="stationList"></div>
+
+    <div class="credits" id="credits"></div>
+  </div>
+</div>
+
+<!-- ===== TOUR ===== -->
+<div id="game" class="screen">
+  <div class="game-top">
+    <button class="game-back" onclick="leaveTour()" title="Zur Übersicht"><svg class="i"><use href="#ic-close"/></svg></button>
+    <div class="station-nav">
+      <button class="nav-arrow" id="navPrev" onclick="navStation(-1)"><svg class="i"><use href="#ic-prev"/></svg></button>
+      <div class="game-title" id="gameTitle">Marienplatz</div>
+      <button class="nav-arrow" id="navNext" onclick="navStation(1)"><svg class="i"><use href="#ic-next"/></svg></button>
+    </div>
+    <div class="game-prog"><span id="progNum">0/17</span><div class="bar"><i id="progBar"></i></div></div>
+  </div>
+  <div class="gps-badge" id="gpsBadge"><span class="dot"></span><span id="gpsText">GPS …</span></div>
+  <div class="game-map"><div id="map"></div></div>
+  <div class="game-panel" id="gamePanel">
+    <div class="panel-handle-row" onclick="togglePanel()"><div class="panel-handle"></div></div>
+    <div id="stationContent"></div>
+  </div>
+  <button class="fab-toggle" id="fab" onclick="togglePanel()"><svg class="i"><use href="#ic-map" id="fabIcon"/></svg> <span id="fabText">Karte</span></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====== STATIONEN ======
+const STATIONS=[
+{id:1,name:'Marienplatz',sub:'Das Herz der Stadt · Start',lat:48.13722,lng:11.5755,img:'images/s1.jpg',credit:'Flocci Nivis, CC BY 4.0',
+ text:`Du stehst an der Mariensäule, dem Nullpunkt Münchens: Von hier aus werden die Entfernungen im Land gemessen, und hier begann die Stadt. 1158 ließ Herzog <strong>Heinrich der Löwe</strong> ein paar Kilometer flussabwärts, bei Föhring, die Brücke des Bischofs von Freising über die Isar abbrennen und baute eine eigene, damit die Salzfuhrwerke aus Reichenhall bei ihm Zoll zahlten und nicht beim Bischof. Kaiser Barbarossa musste den Streit schlichten und erlaubte den Markt „apud Munichen“, bei den Mönchen. Das ist die Geburtsurkunde der Stadt, ein Salzgeschäft. Bis heute steht ein kleiner Mönch im Wappen, das Münchner Kindl.
+Die Säule ließ Kurfürst Maximilian 1638 aufstellen, als Dank dafür, dass die Schweden im Dreißigjährigen Krieg die Stadt verschont hatten. Wobei München sich das Verschonen teuer erkauft hatte, mit einem riesigen Lösegeld und 42 Geiseln. Die vier Putten am Sockel erschlagen Löwe, Basilisk, Drache und Schlange: Krieg, Pest, Hunger und Ketzerei.
+Und dann das Rathaus. Das Neue Rathaus mit seinem Turm sieht aus wie Mittelalter, ist aber jung: gebaut zwischen 1867 und 1909, Neugotik. Täglich um 11 und um 12 Uhr, von März bis Oktober auch um 17 Uhr, dreht sich oben das <strong>Glockenspiel</strong>: 43 Glocken, 32 Figuren. Zuerst die Hochzeit von Herzog Wilhelm dem Fünften mit Renate von Lothringen von 1568, und der bayerische Ritter gewinnt das Turnier, jedes Mal. Darunter tanzen die Schäffler, die Fassmacher, die angeblich 1517 nach der Pest als Erste wieder auf die Straße gingen. Das Ganze dauert zwölf Minuten, und ganz am Ende, wenn alle schon wegschauen, kräht oben ein kleiner goldener Hahn. Die Münchner sagen gern, das Glockenspiel sei die am meisten überschätzte Sehenswürdigkeit der Stadt. Stimmt nicht. Es ist nur zu lang.
+Am Ostende des Platzes das Alte Rathaus mit dem schlanken Turm, gotisch, von Jörg von Halsbach, den du an der Frauenkirche wiedertriffst. Im Saal dort hielt Goebbels am <strong>9. November 1938</strong> die Rede, mit der die Pogromnacht begann. Und der Brunnen vor dir, der Fischbrunnen: Hier sprangen die Metzgerlehrlinge früher beim Metzgersprung ins Wasser, und am Aschermittwoch wäscht der Oberbürgermeister hier bis heute seinen leeren Stadtsäckel aus, damit wieder Geld hineinkommt. Geh jetzt am Fischbrunnen vorbei nach Süden, in den Rindermarkt hinein. An der Ecke siehst du schon den alten Turm mit den vielen Uhren.`},
+{id:2,name:'Alter Peter',sub:'306 Stufen und eine Heilige',lat:48.1366,lng:11.575,img:'images/s2.jpg',credit:'Álvaro de la Paz Franco, CC0',
+ text:`Das ist der Alte Peter, die Peterskirche, die älteste Pfarrkirche der Stadt. Auf diesem Hügel, dem Petersbergl, saßen schon vor der Stadtgründung Mönche, deshalb der Name München. Die Kirche wurde immer wieder umgebaut, gotisch, dann barock; 1327 brannte sie beim großen Stadtbrand, und 1944 trafen sie die Bomben, vom Turm blieb ein Stumpf. Es gab ernsthaft Stimmen, die Ruine abzureißen. Der Bayerische Rundfunk rief stattdessen zu Spenden auf, die Münchner gaben, und der Turm wuchs Stück für Stück wieder, bis 1954 die Uhren liefen.
+Der Turm hat <strong>306 Stufen</strong> und keinen Aufzug, dafür oben den besten Blick der Stadt: Rathaus, Frauenkirche, und bei Föhn die Alpen wie eine Kulisse dahinter. Falls du hinaufwillst, plane eine gute Viertelstunde ein, es lohnt sich. Und das Lied, das du eben gehört hast, kennt hier jedes Kind: Es sagt, sinngemäß, solange dieser Turm auf seinem Bergl steht und die grüne Isar durch die Stadt fließt, bleibt München München. Die Kapelle, die es 1929 einspielte, klingt heute wie aus einer anderen Welt, und genau so ist es gemeint.
+Ein Blick in die Kirche lohnt sich auch, und zwar wegen einer Frau, die dich mit Glasaugen anschaut. Im linken Seitenschiff liegt die <strong>heilige Munditia</strong>, eine römische Märtyrerin aus dem dritten Jahrhundert, als Skelett in Gold und Edelsteinen, mit Glasaugen und einem Palmzweig in der Hand. 1675 kam sie aus den Katakomben Roms hierher; solche Katakombenheiligen waren damals Prestige, und München hatte einen Hang zum Schaurigen. Sie gilt als Patronin der alleinstehenden Frauen, und die Münchner haben sie ins Herz geschlossen, mit einer Mischung aus Frömmigkeit und Grusel.
+Und der Turm hat <strong>acht Zifferblätter</strong>. Der Witz dazu, der Karl Valentin zugeschrieben wird: damit acht Leute gleichzeitig nachschauen können, wie spät es ist. Geh jetzt an der Kirche vorbei weiter nach Süden, den Rindermarkt hinunter, und nach knapp zweihundert Metern öffnet sich der Markt.`},
+{id:3,name:'Viktualienmarkt',sub:'Bier, Brezn und Karl Valentin',lat:48.1351,lng:11.57553,img:'images/s3.jpg',credit:'Strubbl, CC BY-SA 4.0',
+ text:`Der Viktualienmarkt. Viktualien, das ist ein altes Wort für Lebensmittel, und seit <strong>1807</strong> wird hier gehandelt, weil der Markt am Marienplatz zu klein geworden war. König Max Joseph verlegte ihn hierher auf das Gelände des alten Heiliggeistspitals. Heute sind es weit über hundert Stände auf 22.000 Quadratmetern: Käse, Fisch, Blumen, Honig, Gewürze, Obst aus dem Umland. Es riecht nach Brotzeit, und mittendrin liegt der Biergarten unter den Kastanien, wo die Münchner Brauereien reihum ausschenken, alle sechs Wochen wechselt die Sorte. Hier gilt das alte Münchner Biergartenrecht: Essen darfst du mitbringen, nur das Bier musst du kaufen.
+Der große Baum in der Mitte ist der Maibaum, weiß-blau geringelt, mit den Zunftzeichen des Marktes. Maibäume werden in Bayern gestohlen, das ist Brauch: Wer den Baum des Nachbardorfs vor dem Aufstellen entwendet, gibt ihn nur gegen Bier und Brotzeit zurück. Deshalb wird jeder Maibaum nachts bewacht.
+Dann die Brunnen. Sechs stehen hier, und jeder zeigt einen Münchner Volksschauspieler oder Volkssänger: Liesl Karlstadt, Weiß Ferdl, Ida Schumacher, Elise Aulinger, Roider Jackl. Und der bekannteste, am Rand zum Rindermarkt hin: <strong>Karl Valentin</strong>, der dürre Komiker mit dem langen Gesicht, der Bertolt Brecht zum Lachen brachte und dessen Sätze bis heute im Umlauf sind: „Mögen hätt ich schon wollen, aber dürfen hab ich mich nicht getraut.“ Steckt eine Blume in der Hand der Bronzefigur, war ein Verehrer da. Das passiert fast täglich.
+Und die <strong>Weißwurst</strong>. Ihre Erfindung wird auf den 22. Februar 1857 datiert, einen Faschingssonntag, im Gasthaus zum Ewigen Licht am Marienplatz: Dem Wirt Sepp Moser gingen die Schafsdärme für die Bratwürste aus, er nahm Schweinedarm, traute sich nicht, die Würste zu braten, weil sie hätten platzen können, und brühte sie stattdessen. So die Legende. Geblieben ist die Regel, dass eine Weißwurst das Zwölf-Uhr-Läuten nicht hören darf, weil man sie früher ohne Kühlung noch am Vormittag essen musste. Mit süßem Senf, einer Brezn und, ja, einem Weißbier, auch um zehn Uhr morgens. Gezuzelt wird sie, also aus der Haut gesaugt, oder brav mit dem Messer längs aufgeschnitten. Beides ist erlaubt; nur die Haut isst niemand mit.
+Jetzt verlassen wir den Markt. Geh an seinem Nordrand an der Heiliggeistkirche vorbei, über die Straße Tal, und gleich hinter dem Alten Rathaus rechts in die Burgstraße hinein. Nach gut zweihundert Metern siehst du rechts ein Torhaus mit Zinnen, dahinter ein stiller Hof.`},
+{id:4,name:'Alter Hof',sub:'Der Affe und der Kaiser',lat:48.1379,lng:11.5778,img:'images/s4.jpg',credit:'H.Helmlechner, CC BY-SA 4.0',
+ text:`Du stehst im Alten Hof, der ersten Burg der Wittelsbacher in München, und es ist plötzlich still. Um 1253 ließ Herzog Ludwig der Strenge hier am Rand der damaligen Stadt seine Residenz bauen, und hundert Jahre lang wurde von diesem Hof aus regiert, zuletzt sogar das Reich: <strong>Ludwig der Bayer</strong>, ab 1328 römisch-deutscher Kaiser, wohnte hier. München war Kaiserstadt, nur kurz, und trug es mit Stolz.
+Der hübsche Erker mit dem spitzen Dach, der wie ein Vogelhäuschen an der Fassade klebt, heißt <strong>Affenturm</strong>, und dazu gehört die schönste Legende der Stadt. Der Herzog hielt sich einen zahmen Affen, der frei im Hof herumlief. Eines Tages, so erzählt man, packte das Tier den kleinen Prinzen Ludwig aus der Wiege, kletterte mit ihm die Fassade hinauf und setzte sich mit dem Kind aufs Dach. Der ganze Hof stand unten und wagte nicht zu atmen. Nach einer Weile beruhigte sich der Affe, kletterte vorsichtig wieder herunter und legte das Kind zurück in die Wiege. Aus dem Kind wurde der Kaiser. Historiker sagen, der Erker sei jünger als die Geschichte. Die Münchner sagen: Na und.
+Als die Herzöge im 16. Jahrhundert in die größere Residenz umzogen, wurde der Alte Hof zum Amtsgebäude, später zum Finanzamt, im Krieg zur Ruine, und heute sitzt hier unter anderem die Bayerische Schlösserverwaltung. Im Gewölbe des Torhauses gibt es eine kleine, kostenlose Ausstellung zur Stadtgeschichte mit einem Modell des mittelalterlichen Münchens, falls du fünf Minuten übrig hast.
+Ein Detail noch: Ludwig der Bayer war der Kaiser, der sich mit dem Papst überwarf, exkommuniziert wurde und trotzdem in Rom die Krone nahm. Er starb <strong>1347</strong> bei der Bärenjagd nahe Fürstenfeldbruck und liegt in der Frauenkirche, dort kommen wir noch hin. Geh jetzt durch den Hof nach Osten hinaus, durch den Pfisterhof auf die Pfisterstraße, und dann rechts weiter zum Platzl. Nach zweihundert Metern hörst du das nächste Haus, bevor du es siehst.`},
+{id:5,name:'Hofbräuhaus',sub:'Das berühmteste Wirtshaus der Welt',lat:48.13763,lng:11.57997,img:'images/s5.jpg',credit:'Dr. Frank Gaeth, CC BY-SA 4.0',
+ text:`Das Hofbräuhaus am Platzl. Drinnen sitzen an guten Tagen dreitausend Menschen, die Kapelle spielt, die Bedienungen tragen zehn Maßkrüge auf einmal, und es riecht nach Bier, Braten und Bohnerwachs. Aber der Reihe nach. <strong>1589</strong> gründete Herzog Wilhelm der Fünfte, der Fromme vom Glockenspiel, ein eigenes Brauhaus, weil ihm das Bier, das der Hof aus Niedersachsen kommen ließ, zu teuer wurde. Bayern hatte damals ein Bierproblem: Es schmeckte nicht. Sein Sohn Maximilian ließ 1607 hier am Platzl eine Weißbierbrauerei bauen, denn Weißbier durfte nur der Herzog brauen, ein Monopol, das die Staatskasse füllte. Das Wirtshaus, wie du es siehst, ist von 1897, und Bier war hier immer Staatsgeschäft: Bis heute gehört das Hofbräuhaus dem Freistaat Bayern.
+Über die Gäste könnte man ein Buch schreiben. Mozart war 1780 in München und soll, so wirbt das Haus, mit Hofbräu-Bier leichter am „Idomeneo“ gearbeitet haben. Lenin wohnte 1900 bis 1902 in München und kam gern her; seine Frau <strong>Krupskaja</strong> schrieb später, das Bier hier habe die Klassenunterschiede aufgehoben. Und am <strong>24. Februar 1920</strong> verlas im Festsaal oben ein noch unbekannter Redner namens Hitler das Programm seiner Partei, vor zweitausend Zuhörern. Das Haus verschweigt das nicht, es steht auf einer Tafel.
+Was du wissen musst, wenn du hineingehst: Die Schwemme im Erdgeschoss ist der große Saal mit der Kapelle. Die Stammtische sind reserviert, immer, und die Stammgäste haben ihre eigenen Krüge, die in einem Tresor mit kleinen Schlössern hängen, dem Krugtresor; etwa vierhundert Krüge, die Warteliste ist lang. Wer sich zu jemandem an den Tisch setzen will, fragt „Ist hier noch frei?“, so ist das gedacht. Eine Maß ist ein Liter, und man hebt sie mit der ganzen Hand am Henkel, nicht mit den Fingern.
+Falls es dir zu voll ist: Der Biergarten im Innenhof ist ruhiger. Und in der Nähe liegen die Konkurrenten, Augustiner, Paulaner, Ayinger, alle mit eigenem Charakter. Das Hofbräuhaus ist das Original, nicht unbedingt das Beste, aber man muss es einmal gesehen haben. Jetzt geh vom Platzl nach Norden, die Orlandostraße hinauf zur Maximilianstraße, der Prachtstraße mit den teuersten Läden der Stadt. Dort links, und nach hundert Metern öffnet sich der Max-Joseph-Platz mit dem Theater.`},
+{id:6,name:'Nationaltheater',sub:'Ein Opernhaus, bezahlt mit Bier',lat:48.1393,lng:11.5782,img:'images/s6.jpg',credit:'xiquinhosilva, CC BY 2.0',
+ text:`Vor dir der Max-Joseph-Platz, mit dem sitzenden König in der Mitte und dem Nationaltheater dahinter, einem der größten Opernhäuser der Welt: über zweitausend Plätze, ein Tempel mit Säulenvorhalle, und in ihm die Bayerische Staatsoper. Der König auf dem Sockel, Max Joseph, war der erste König Bayerns, gekrönt 1806 von Napoleons Gnaden. Er wollte auf keinen Fall sitzend dargestellt werden, das fand er unwürdig, deshalb wurde das Denkmal erst nach seinem Tod aufgestellt.
+Und jetzt die Geschichte, die dieses Haus erklärt. Das Theater wurde 1818 eröffnet, und schon im Januar 1823 brannte es ab, während der Vorstellung einer Oper von Méhul. Es war bitterkalt, das Löschwasser gefroren, und die Feuerwehr, so erzählt man, schleppte Bier aus dem nahen Hofbräuhaus heran, um die Spritzen zu füllen. Der Wiederaufbau kostete Geld, das der Staat nicht hatte. Also führte man den „<strong>Bierpfennig</strong>“ ein, einen Aufschlag auf jede Maß in der Stadt, und die Münchner tranken ihr Opernhaus in zwei Jahren zusammen: Am 2. Januar 1825 wurde es wiedereröffnet, gebaut von Leo von Klenze. Im Krieg brannte es 1943 wieder aus, und wieder sammelten die Münchner, 1963 stand es erneut. Man kann sagen: Dieses Haus ist zweimal aus Bier und Trotz gebaut.
+In diesem Haus hat sich die Musikgeschichte gedreht. <strong>Richard Wagner</strong>, hoch verschuldet und auf der Flucht vor Gläubigern, wurde 1864 von dem gerade gekrönten, achtzehnjährigen König Ludwig dem Zweiten nach München geholt. Der König bezahlte seine Schulden, seine Villa, sein Leben. Hier wurden „Tristan und Isolde“ 1865 und „Die Meistersinger von Nürnberg“ 1868 uraufgeführt, später auch „Rheingold“ und „Walküre“. Die Münchner hassten Wagner. Sie nannten ihn „Lolus“, nach Lola Montez, der Tänzerin, die einst den Großvater des Königs im Griff gehabt hatte. Nach anderthalb Jahren musste Ludwig ihn aus München wegschicken, aus seinem Herzen nie. Was du eben gehört hast, war die Ouvertüre der Meistersinger, die genau hier zum ersten Mal erklang.
+Links neben dem Nationaltheater, mit der schlichteren Fassade, das Residenztheater, und dahinter, in der Residenz versteckt, das <strong>Cuvilliés-Theater</strong>, das schönste Rokokotheater der Welt. Dort dirigierte Mozart 1781 die Uraufführung seines „Idomeneo“. Im Krieg hat man den ganzen Zuschauerraum ausgebaut, in Kisten gelagert und danach an anderer Stelle wieder zusammengesetzt, deshalb ist er heute noch original. Geh jetzt über den Platz nach Nordwesten, links am Königsbau der Residenz entlang, in die Residenzstraße. Nach hundert Metern stehen vier Löwen vor den Portalen. Bleib bei ihnen stehen.`},
+{id:7,name:'Residenz',sub:'Löwen, Schätze, Märchenkönig',lat:48.1403,lng:11.5776,img:'images/s7.jpg',credit:'Wilfredor, CC0',
+ text:`Vier Löwen aus Bronze, jeder mit einem Schild, und alle vier Schilde sind blank poliert, weil jeder, der vorbeikommt, mit der Hand darüberstreicht. Das bringt Glück, sagen die Münchner, besonders Studenten vor Prüfungen. Mach es ruhig auch. Die Löwen bewachen die Residenz, den Stadtpalast der Wittelsbacher, in dem die Familie von 1508 bis 1918 wohnte: erst Herzöge, dann Kurfürsten, dann Könige. Vierhundert Jahre lang hat jede Generation angebaut, und herausgekommen ist der größte Innenstadtpalast Deutschlands, mit zehn Höfen und 130 Schauräumen.
+Ein paar Dinge, die man sich merkt: Das <strong>Antiquarium</strong>, das du auf dem Bild siehst, ist ein 66 Meter langer Renaissancesaal von 1571, gebaut für die Antikensammlung des Herzogs, der größte Saal seiner Art nördlich der Alpen, und bis heute der Festsaal, in dem der Ministerpräsident Staatsgäste empfängt. In der Schatzkammer liegen Kronen und Reliquiare, und die Sankt-Georgs-Statuette, ein Ritter aus Gold, Diamanten, Rubinen und Smaragden, an dem du nicht vorbeikommst, ohne kurz den Atem anzuhalten. Und in der Ahnengalerie hängen 121 Porträts, alle Wittelsbacher in einer Reihe, angeblich zurück bis Karl dem Großen, was natürlich ausgedacht ist.
+Der interessanteste Bewohner war <strong>Ludwig der Zweite</strong>, der König, dem du eben im Theater begegnet bist. Er hasste München und die Residenz, hielt sich lieber in den Bergen auf und baute dort seine Schlösser, Neuschwanstein, Linderhof, Herrenchiemsee. Wenn er doch hier war, lebte er nachts: Er ließ sich das Frühstück am Abend servieren und das Mittagessen um Mitternacht, und oben auf dem Dach der Residenz hatte er einen <strong>Wintergarten</strong> mit einem künstlichen See samt Schwanenboot, einem Palmenhaus und einem gemalten Himalaya. Eine Infantin aus Spanien soll bei einem Abendessen in den See gefallen sein. 1886 wurde der König entmündigt, nach Schloss Berg gebracht, und am nächsten Abend lag er tot im Starnberger See, zusammen mit seinem Arzt. Ob Mord, Unfall oder Selbstmord, darüber wird bis heute gestritten. Den Wintergarten riss man ab, weil er durch die Decke tropfte.
+Was du gehört hast, war Wagners Brautchor aus „Lohengrin“, der Oper, die Ludwig mit fünfzehn zum ersten Mal sah und die sein Leben bestimmte. Wenn du die Residenz besichtigen willst, rechne mit zwei Stunden, der Eingang ist am Max-Joseph-Platz, und heb sie dir für einen zweiten Tag auf. Geh jetzt weiter die Residenzstraße nach Norden, hundertfünfzig Meter, bis sich der Platz mit der großen Loggia öffnet.`},
+{id:8,name:'Feldherrnhalle',sub:'Wo die Geschichte abbog',lat:48.14167,lng:11.57731,img:'images/s8.jpg',credit:'Thomas Wolf, www.foto-tw.de, CC BY-SA 3.0 de',
+ text:`Der Odeonsplatz mit der Feldherrnhalle. König Ludwig der Erste, der Großvater des Märchenkönigs, wollte aus München ein Isar-Athen machen, und sein Architekt Friedrich von Gärtner baute ihm 1841 bis 1844 diese Loggia, nach dem Vorbild der Loggia dei Lanzi in Florenz. Drinnen stehen zwei Feldherren, Tilly und Wrede, und in der Mitte ein Denkmal für die bayerische Armee. Die beiden Löwen auf der Treppe: Der eine hat das Maul offen, der andere geschlossen. Der mit dem offenen Maul schaut zur Residenz, sagen die Münchner, weil man gegen den Staat immer das Maul aufreißen darf, und der stumme schaut zur Kirche.
+Dann kam der <strong>9. November 1923</strong>. Hitler hatte am Abend zuvor im Bürgerbräukeller den Putsch ausgerufen und marschierte am Vormittag mit etwa zweitausend Anhängern durch die Altstadt, Ludendorff neben ihm. Genau hier, vor der Feldherrnhalle, stellte sich ihnen die bayerische Landespolizei entgegen. Es fielen Schüsse, sechzehn Putschisten und vier Polizisten starben, Hitler kugelte sich beim Sturz die Schulter aus und floh im Auto. Der Putsch war nach Minuten vorbei; er kam ins Gefängnis, schrieb dort sein Buch und war nach neun Monaten wieder frei. Nach 1933 machte er aus diesem Ort ein Heiligtum: eine Tafel mit den Namen der Toten, zwei SS-Posten in Dauerwache, und jeder, der vorbeikam, musste den Arm heben.
+Und hier kommt die schönste Fußnote der Stadt. Wer nicht grüßen wollte, ging einen Umweg: hinter der Feldherrnhalle durch die schmale <strong>Viscardigasse</strong>. Die Münchner nannten sie <strong>Drückebergergasserl</strong>. Heute ist in ihr Pflaster eine geschwungene Spur aus bronzefarbenen Steinen eingelassen, für die, die diesen Umweg nahmen. Schau sie dir an, sie liegt zwanzig Meter von hier, rechts neben der Halle. Ein stiller Ort, wichtiger als die Halle selbst.
+Der Odeonsplatz ist heute die Bühne der Stadt: Im Sommer spielen hier die Philharmoniker unter freiem Himmel, und beim Corso Leopold ist die Ludwigstraße bis zum Siegestor voller Menschen. Wenn du nach Norden schaust, siehst du sie: die Ludwigstraße, kerzengerade, ein Kilometer bis zum Siegestor, ebenfalls Ludwigs Werk. Jetzt geh nach rechts, an der Feldherrnhalle vorbei, durch die Arkaden am Hofgarten. Dahinter öffnet sich ein Garten, und in seiner Mitte steht ein kleiner Tempel.`},
+{id:9,name:'Hofgarten',sub:'Tempel, Garten, Welle · Eisbach optional',lat:48.14294,lng:11.58,img:'images/s9.jpg',credit:'Julian Herzog (Website), CC BY 4.0',
+ text:`Der Hofgarten, angelegt 1613 bis 1617 von Kurfürst Maximilian nach italienischem Vorbild: ein Renaissancegarten mit Kieswegen, Brunnen und Rasenquadraten, und in der Mitte der <strong>Dianatempel</strong> von 1615, ein achteckiger Pavillon mit acht offenen Bögen. Auf seinem Dach steht die Bavaria, eine Kopie; das Original von Hubert Gerhard steht im Museum. Vor allem aber: Unter diesem Dach wird getanzt. An Sommerabenden treffen sich hier Paare zum Tango und zum Swing, ohne Anmeldung, jeder darf mitmachen, und die Akustik unter der Kuppel ist so gut, dass Musiker den Tempel als Bühne nutzen. Wenn du Glück hast, spielt gerade jemand Cello.
+Um den Garten laufen die Arkaden mit Fresken aus der bayerischen Geschichte, im Osten steht die Staatskanzlei, ein Glasbau, der die Kuppel des zerbombten Armeemuseums umschließt, was die Münchner jahrelang erbittert bekämpft haben. Davor ein schwarzer Stein für die Toten der Kriege und an der Straße das Denkmal für die Weiße Rose. Und am Rand des Gartens, unter den Bäumen, der Boule-Platz, wo an jedem Nachmittag gespielt wird, ganz ruhig, mit dem Klacken der Kugeln.
+Und jetzt die Wahl. Vom Hofgarten sind es gut 500 Meter nach Osten, an der Staatskanzlei vorbei und die Prinzregentenstraße entlang, bis zur <strong>Eisbachwelle</strong> am Eingang des Englischen Gartens. Dort steht eine stehende Welle im Bach, und darauf surfen Leute in Neoprenanzügen, das ganze Jahr, auch im Winter mit Schnee am Ufer. Sie stellen sich am Ufer an, springen nacheinander aufs Brett, und auf der Brücke stehen hundert Zuschauer. Es ist eine der seltsamsten und schönsten Sehenswürdigkeiten der Stadt, mitten im Verkehr. Der Abstecher kostet hin und zurück etwa eine halbe Stunde; wenn du sie hast, geh. Der <strong>Englische Garten</strong> selbst ist mit 375 Hektar größer als der Central Park, angelegt ab 1789 von einem Amerikaner, Benjamin Thompson, dem späteren Grafen Rumford, der nebenbei die Rumfordsuppe für Arme und einen sparsamen Küchenherd erfand. Aber den Garten hebst du dir besser für einen eigenen Nachmittag auf, mit Chinesischem Turm und Biergarten.
+Egal, ob du zur Welle gehst oder nicht: Weiter geht es an der Theatinerkirche, dem gelben Bau mit den zwei Türmen und der Kuppel am Odeonsplatz. Vom Dianatempel sind das hundertfünfzig Meter zurück nach Westen durch die Arkaden, du hast sie vorhin schon gesehen. Stell dich vor die Fassade.`},
+{id:10,name:'Theatinerkirche',sub:'Ein Gelübde in Gelb',lat:48.1422,lng:11.57705,img:'images/s10.jpg',credit:'High Contrast, CC BY 3.0 de',
+ text:`Die Theatinerkirche, Sankt Kajetan, so gelb, wie eine Kirche in Bayern nur sein kann. Ihre Geschichte beginnt mit einem Kinderwunsch. Kurfürst Ferdinand Maria und seine Frau <strong>Henriette Adelaide</strong> von Savoyen warteten zehn Jahre auf einen Thronfolger, und die Kurfürstin gelobte, für einen Sohn die schönste Kirche zu bauen, die München je gesehen hat. 1662 kam <strong>Max Emanuel</strong> zur Welt, und 1663 begann der Bau, nach dem Vorbild von Sant'Andrea della Valle in Rom, mit italienischen Baumeistern, denn Henriette Adelaide aus Turin hielt nichts von deutscher Baukunst. Es war die erste Kirche im italienischen Hochbarock nördlich der Alpen, und die Münchner haben an diesem Stil Geschmack gefunden, das siehst du an der halben Stadt. Die Fassade allerdings blieb hundert Jahre lang roh, erst François de Cuvilliés vollendete sie 1768 im Rokoko. Die Kuppel ist 71 Meter hoch.
+Drinnen ist alles weiß. Kein Gold, kein Bunt, nur Stuck in Weiß, ein Wald aus Blattwerk und Engeln, und das Licht fällt von oben aus der Kuppel. Nimm dir zwei Minuten, es ist einer der ruhigsten Räume der Stadt, zwanzig Meter neben dem lautesten Platz. In der Gruft liegen die Wittelsbacher, die nicht in der Frauenkirche oder bei Sankt Michael sind: Ferdinand Maria und Henriette Adelaide, Max Emanuel, König Max Joseph vom Theaterplatz, und auch <strong>Otto von Griechenland</strong>, der bayerische Prinz, der 1832 König der Griechen wurde und 1862 wieder heimgeschickt.
+Und Max Emanuel, das Gelübde-Kind? Er wurde der „Blaue Kurfürst“, ein Kriegsheld gegen die Türken vor Wien und Belgrad. Dann verlor er im Spanischen Erbfolgekrieg alles, Bayern wurde von Österreich besetzt, und das führte zu dem Bauernaufstand, von dem du am Sendlinger Tor hören wirst. Die Kirche hat also, streng genommen, Ärger gemacht.
+Wenn du hinausgehst, schau nach links auf die Ecke Theatinerstraße: Dort liegen die Fünf Höfe, eine Passage mit Innenhöfen, gebaut von Herzog und de Meuron, den Architekten der Allianz-Arena, mit einer riesigen Kugel von Olafur Eliasson, die von der Decke hängt. Wir gehen die Theatinerstraße nach Süden, das ist Münchens Einkaufsstraße für die, die nicht auf den Preis schauen, etwa dreihundert Meter, dann rechts in die Maffeistraße und weiter, bis die zwei Türme mit den grünen Hauben über dir stehen.`},
+{id:11,name:'Frauenkirche',sub:'Der Teufelstritt',lat:48.13858,lng:11.57359,img:'images/s11.jpg',credit:'Diliff, CC BY 2.5',
+ text:`Der Dom zu Unserer Lieben Frau, die Frauenkirche, das Wahrzeichen der Stadt, und die Glocken, die du gerade gehört hast, sind ihre, aufgenommen genau hier. Zehn Glocken hängen in den Türmen, die größte, die <strong>Susanna</strong> von 1490, wiegt acht Tonnen und läutet nur an hohen Feiertagen. Die Türme sind fast 99 Meter hoch, der nördliche ein paar Zentimeter höher, und ihre Hauben sind das Merkwürdigste an ihnen: keine Spitzen, sondern zwei grüne Zwiebeln, aufgesetzt <strong>1525</strong>, angeblich nach dem Vorbild des Felsendoms in Jerusalem, weil das Geld für gotische Turmhelme fehlte. Aus der Not wurde das Wahrzeichen. Und seit einem Bürgerentscheid von 2004 darf in München kein Hochhaus höher sein als diese Türme: hundert Meter, Schluss. Der Blick auf sie ist Gesetz.
+Der Bau selbst: 1468 legte Herzog Sigismund den Grundstein, und der Baumeister war Jörg von Halsbach, den du vom Alten Rathaus kennst. Nach nur zwanzig Jahren stand die Kirche, 1488, in Backstein, weil es in der Münchner Schotterebene keinen Naturstein gibt. 109 Meter lang, 20.000 Menschen passen hinein, damals mehr, als die Stadt Einwohner hatte. Man baute für die Zukunft.
+Geh hinein und bleib gleich hinter dem Eingang stehen. Im Boden ist ein Fußabdruck, schwarz, mit einem kleinen Sporn an der Ferse: der <strong>Teufelstritt</strong>. Die Legende: Der Teufel hatte dem Baumeister geholfen, unter der Bedingung, dass die Kirche keine Fenster bekommt. Als sie fertig war, führte Halsbach ihn an genau diese Stelle, und von hier aus sieht man tatsächlich kein einziges Fenster, weil die Säulen sie verdecken. Der Teufel lachte über die fensterlose Kirche, machte einen Schritt weiter, sah das Licht, merkte, dass er betrogen war, und stampfte vor Wut mit dem Fuß auf. Der Abdruck blieb. Seither rauscht er als Wind um die Kirche, um sie zu zerstören, deshalb weht es vor dem Portal immer. Prüf es beim Hinausgehen. Die Wahrheit ist prosaischer: Früher verdeckte der Hochaltar das Fenster im Chor, seit dem Umbau sieht man von der Stelle aus eines ganz hinten. Der Teufel hat verloren.
+Weiter vorn, im Mittelschiff, das schwarze Marmorgrab: Kaiser Ludwig der Bayer, der Mann aus dem Alten Hof, gestorben 1347. Das Grabmal ließ Herzog Maximilian 1622 aufstellen, als Anspruch: Wir Wittelsbacher waren Kaiser. Die Frauenkirche ist auch Bischofskirche, und 1977 wurde hier ein Theologieprofessor zum Erzbischof geweiht, der später Papst wurde: Joseph Ratzinger, Benedikt der Sechzehnte. Geh jetzt hinaus auf den Frauenplatz, nach Westen, dann links in die Fußgängerzone, die hier Neuhauser Straße heißt. Nach zweihundert Metern rechts eine weiße Fassade mit einem Erzengel, der einen Drachen tötet.`},
+{id:12,name:'St. Michael',sub:'Turm, Gruft, Märchenkönig',lat:48.13892,lng:11.57041,img:'images/s12.jpg',credit:'Andrew Bossi, CC BY-SA 2.5',
+ text:`Sankt Michael, die Jesuitenkirche, mit der Renaissancefassade, auf der die ganze Herrscherfamilie in Stein steht, und unten in der Mitte der Erzengel Michael, der mit dem Speer den Teufel in Drachengestalt niederstreckt. Das war Programm: Herzog Wilhelm der Fünfte baute die Kirche 1583 bis 1597 als Bollwerk der Gegenreformation, das größte Renaissance-Gotteshaus nördlich der Alpen, und er baute sich damit fast bankrott. <strong>1590</strong>, kurz vor der Fertigstellung, stürzte der eben vollendete Turm ein und riss den Chor mit. Wilhelm nahm das nicht als Warnung, sondern als Auftrag: dann eben größer, mit einem noch längeren Chor. Auf einen Turm verzichtete er. Die Kirche hat bis heute keinen.
+Innen trägt ein Tonnengewölbe von 20 Metern Spannweite den Raum, das zweitgrößte der Welt nach dem Petersdom, und es hat sogar den Bombenkrieg überstanden, als die Fassade schon in Trümmern lag. Aber die meisten kommen wegen der Gruft. Unten, in der Fürstengruft, liegen etwa vierzig Wittelsbacher, und in der Mitte ein schlichter Sarkophag, immer mit frischen Blumen: <strong>Ludwig der Zweite</strong>, der Märchenkönig aus der Residenz, der 1886 aus dem Starnberger See gezogen wurde. Sein Herz ist nicht hier; es liegt, nach altem Brauch der Familie, in einer Urne in der Gnadenkapelle von Altötting. Neben ihm sein Bruder Otto, der nach ihm ebenfalls König war, aber sein ganzes Leben in geistiger Umnachtung verbrachte, in Schloss Fürstenried, während ein Onkel für ihn regierte. Zwei Könige, zwei Sarkophage, eine Familie, die sich nicht zu helfen wusste. Der Eintritt in die Gruft kostet ein paar Euro und lohnt sich für zehn Minuten.
+Gleich nebenan die kleine Bürgersaalkirche mit dem Grab von Pater <strong>Rupert Mayer</strong>, dem Jesuiten, der hier gegen die Nazis predigte, ins KZ kam und 1945 an Allerheiligen mitten in der Predigt zusammenbrach und starb. Die Münchner verehren ihn wie einen Heiligen, sein Grab ist immer voller Zettel. Und gegenüber, mit dem Wildschwein aus Bronze vor der Tür, das Jagd- und Fischereimuseum. Die Schnauze des Wildschweins ist blank gerieben, auch das bringt Glück. Die Neuhauser Straße war übrigens 1972, zur Olympiade, eine der ersten Fußgängerzonen Deutschlands, und sie ist heute eine der meistbesuchten Einkaufsstraßen Europas. Geh sie weiter nach Westen, dreihundert Meter, bis zum Tor.`},
+{id:13,name:'Karlstor & Stachus',sub:'Der Platz mit zwei Namen',lat:48.1394,lng:11.5665,img:'images/s13.jpg',credit:'Rob Faulkner, CC BY 2.0',
+ text:`Das Karlstor, das westliche Stadttor, im Kern aus dem 14. Jahrhundert, und dahinter der Platz, der zwei Namen hat, von denen nur einer benutzt wird. Offiziell heißt er Karlsplatz, seit 1797, nach dem Kurfürsten Karl Theodor, der 1791 die Stadtmauern schleifen ließ. Die Münchner konnten den Mann nicht leiden. Er kam aus der Pfalz, hätte Bayern am liebsten gegen die Niederlande getauscht und hat sich nie Mühe gegeben, das zu verbergen. Also nannten sie den Platz nach etwas, das sie mochten: nach dem Wirt <strong>Eustachius Föderl</strong>, genannt Stachus, dessen Biergarten hier an der Ecke stand, lange bevor es den Platz gab. Bis heute sagt jeder Stachus, sogar die Ansage in der U-Bahn. Die Rache der Münchner an einem Kurfürsten, sanft und für immer.
+Der Platz war jahrzehntelang der verkehrsreichste Europas, mit Straßenbahnen, Bussen und Autos in allen Richtungen; „Da geht's zu wie am Stachus“ ist bis heute ein bayerisches Sprichwort für Gedränge. Seit den siebziger Jahren liegt darunter ein unterirdisches Einkaufszentrum, und oben ist die Mitte ein Brunnen, in dem im Sommer Kinder planschen und im Winter Schlittschuh gelaufen wird. Die Rundbauten links und rechts vom Tor stammen von Gabriel von Seidl, dem Architekten, den du am Ende der Runde am Ruffinihaus wiedertriffst.
+Und wenn du nach rechts schaust, über den Platz hinweg, siehst du die Kuppel des Justizpalasts. Dort, im <strong>Saal 253</strong> im ersten Stock, fand am 22. Februar 1943 der Prozess gegen Hans und <strong>Sophie Scholl</strong> und Christoph Probst statt, die Studenten der Weißen Rose, die vier Tage vorher in der Universität Flugblätter gegen Hitler verteilt hatten. Roland Freisler war eigens aus Berlin gekommen, der Prozess dauerte wenige Stunden, das Urteil lautete auf Tod, und es wurde noch am selben Nachmittag in Stadelheim vollstreckt. Sophie Scholl war 21. Überliefert ist ihr Satz an die Gefängniswärterin: So ein herrlicher Sonnentag, und ich muss gehen. Der Saal ist heute eine Gedenkstätte, an Werktagen frei zugänglich, zehn Minuten von hier.
+Jetzt kommt das längste Stück der Runde, aber es geht geradeaus. Geh vom Tor aus nach links, nach Süden, an der Sonnenstraße entlang oder eine Straße weiter innen durch die Herzog-Wilhelm-Straße, gut sechshundert Meter. Der Weg folgt der alten Stadtmauer, und am Ende steht das zweite Tor.`},
+{id:14,name:'Sendlinger Tor',sub:'Die Mordweihnacht',lat:48.13346,lng:11.56686,img:'images/s14.jpg',credit:'Wilfredor, CC0',
+ text:`Das Sendlinger Tor, <strong>1318</strong> zum ersten Mal erwähnt, das südliche Stadttor, von dem aus die Straße nach Italien begann, über Sendling, Wolfratshausen und den Brenner. Seit 1906 hat es statt drei kleinen Durchgängen einen großen Bogen, damit die Straßenbahn durchpasst. Der Platz davor mit den Trambahnen ist heute einer der lebendigsten der Stadt, im Sommer sitzen hundert Leute auf den Mauern und Bänken, mit Eis in der Hand.
+Aber dieses Tor hat eine dunkle Geschichte, die jedes Münchner Kind kennt. 1705, im Spanischen Erbfolgekrieg, war Bayern von österreichischen Truppen besetzt, Kurfürst Max Emanuel, das Gelübde-Kind von der Theatinerkirche, saß im Exil. Die Besatzer pressten Steuern, zogen junge Männer zwangsweise ein, und im Oberland erhoben sich die Bauern. „Lieber bayrisch sterben als kaiserlich verderben“ war ihr Ruf. In der Weihnachtsnacht 1705 zogen mehr als zweitausend Bauern und Bürger, bewaffnet mit Sensen, Dreschflegeln und ein paar Gewehren, auf München zu, weil Verschwörer in der Stadt versprochen hatten, die Tore zu öffnen. Die Tore blieben zu, der Plan war verraten. In Sendling, zwei Kilometer von hier, stellte sie die kaiserliche Reiterei am Morgen des 25. Dezember, und obwohl sie sich ergaben, wurden sie niedergemacht: rund elfhundert Tote, an Weihnachten. Die <strong>Sendlinger Mordweihnacht</strong>.
+Und dann die Legende. Der <strong>Schmied von Kochel</strong>, ein Riese aus dem Oberland, soll sich mit einer Stange, an die eine bayerische Fahne gebunden war, als Letzter an der Kirchhofmauer von Sendling gewehrt haben, bis er fiel. Ob es ihn gab, weiß niemand; unter den Toten war ein Schmied namens Balthasar Riesenberger, vielleicht steckt er dahinter. In Sendling steht sein Denkmal, an der Alten Kirche dort ein Fresko, und jedes Jahr an Weihnachten wird der Toten gedacht. Für die Bayern ist es die Geschichte vom aufrechten Bauern gegen die fremde Macht. Der Kurfürst, dessen Politik die Bauern in dieses Unglück geführt hatte, kam zehn Jahre später zurück und baute an Nymphenburg weiter.
+Vor dir, wenn du durch das Tor in die Stadt schaust, beginnt die Sendlinger Straße, heute Fußgängerzone, eine der ältesten Straßen der Stadt, mit alten Läden und neuen Cafés. Geh sie hinein, knapp dreihundert Meter, und halte dann auf der linken Seite Ausschau nach einer Fassade, die zwischen zwei normalen Häusern klemmt und aussieht, als wäre sie aus Schlagsahne gebaut.`},
+{id:15,name:'Asamkirche',sub:'Zwei Brüder bauen den Himmel · innen',lat:48.13521,lng:11.56952,img:'images/s15.jpg',credit:'Flocci Nivis, CC BY 4.0',
+ text:`Die Asamkirche, offiziell Sankt Johann <strong>Nepomuk</strong>, und sie ist nur neun Meter breit. Zwei Brüder haben sie gebaut, Cosmas Damian Asam, der Maler, und <strong>Egid Quirin</strong> Asam, der Bildhauer, die berühmtesten Barockkünstler Bayerns, und sie haben sie für sich selbst gebaut, <strong>1733 bis 1746</strong>, als Privatkirche, auf eigene Kosten, ohne Auftrag. Egid Quirin wohnte im Haus daneben, dem Asamhaus, und hatte aus seinem Schlafzimmer ein Fenster direkt auf den Hochaltar, damit er vom Bett aus die Messe sehen konnte. Erst auf Druck der Bürger öffneten die Brüder die Kirche für alle.
+Geh hinein, es kostet nichts und dauert fünf Minuten, aber es sind fünf Minuten, die man nicht vergisst. Der Raum ist dunkel, eng und hoch, und alles ist in Bewegung: Marmor in Rot und Braun, Gold, das im Halbdunkel schimmert, gedrehte Säulen, Engel, die aus den Wänden fallen, und oben, wo das Licht durch ein verstecktes Fenster kommt, die Dreifaltigkeit in Gold. Am Eingang steht der Tod als Skelett und schneidet einem Menschen mit der Schere den Lebensfaden ab. Das ist der Barock in Reinform: Er will dich nicht überzeugen, er will dich überwältigen. Geweiht ist die Kirche dem heiligen Nepomuk, dem Prager Beichtvater, der lieber in die Moldau geworfen wurde, als das Beichtgeheimnis der Königin zu verraten, weshalb er auf so vielen Brücken steht, mit dem Finger auf den Lippen.
+Die Brüder hatten in Rom gelernt und Bayern mit Kirchen überzogen, Weltenburg, Osterhofen, Rohr, aber diese hier war ihr Testament. Cosmas Damian starb 1739, noch vor der Fertigstellung, Egid Quirin 1750 in Mannheim, und die Kirche blieb, als Selbstporträt zweier Männer, die den Himmel für machbar hielten. Die Orgel, die du gehört hast, ist nicht die ihre, aber die Musik ist aus ihrer Zeit. Ein Hinweis: Es ist eine Kirche, kein Museum, die Leute drinnen beten. Sprich leise.
+Von hier geht es nach Osten, tiefer in die Altstadt zurück. Geh ein paar Schritte zurück Richtung Tor, auf der anderen Straßenseite zweigt die Dultstraße ab. Ihr folgst du über den Oberanger, und nach zweihundert Metern öffnet sich ein weiter Platz mit einem Würfel aus hellem Stein und Glas.`},
+{id:16,name:'Jakobsplatz',sub:'Ein Zelt aus Stein',lat:48.1345,lng:11.57266,img:'images/s16.jpg',credit:'Flocci Nivis, CC BY-SA 4.0',
+ text:`Der Sankt-Jakobs-Platz, und der Würfel aus Travertin und Glas ist die Hauptsynagoge Ohel Jakob, Zelt Jakobs. Der Sockel aus rauem Stein erinnert an die Klagemauer in Jerusalem, der gläserne Aufbau an das Zelt, das die Israeliten durch die Wüste trugen. Eingeweiht wurde sie am <strong>9. November 2006</strong>, auf den Tag 68 Jahre nach der Pogromnacht, und daneben stehen das Jüdische Museum und das Gemeindezentrum mit Schule, Kindergarten und Restaurant. Damit kehrte das jüdische Leben in die Mitte der Stadt zurück, sichtbar, nicht mehr versteckt in einem Hinterhof.
+Warum das so wichtig ist, erklärt ein Datum. Die alte Hauptsynagoge Münchens stand an der Herzog-Max-Straße, nahe dem Stachus, ein großer Bau von 1887, und sie wurde nicht in der Pogromnacht zerstört, sondern schon fünf Monate vorher: Im <strong>Juni 1938</strong> ließ Hitler sie abreißen, angeblich, weil sie ihm auf dem Weg zum Künstlerhaus im Blick stand. Die Gemeinde hatte wenige Tage, um ihre Kultgegenstände zu retten. Es war die erste Synagoge, die im Deutschen Reich abgerissen wurde. München nannte sich „Hauptstadt der Bewegung“, und vieles wurde hier zuerst ausprobiert. Von den rund neuntausend Münchner Juden des Jahres 1933 wurden mehr als dreitausend ermordet; die anderen konnten fliehen.
+In die Synagoge kommst du nur mit Anmeldung und Führung, das Museum aber ist offen und kostet wenig. Unter dem Platz verläuft der <strong>Gang der Erinnerung</strong>, ein Verbindungsgang von der Synagoge ins Gemeindehaus, mit den Namen der ermordeten Münchner Juden an den Wänden, damit niemand die Straße überqueren muss. Auf dem Platz selbst spielen Kinder, und das ist vielleicht die beste Antwort. Gleich daneben, der alte Backsteinbau mit dem hohen Dach, ist das Münchner Stadtmuseum im Zeughaus, derzeit für Jahre wegen Sanierung geschlossen.
+Es ist fast geschafft. Geh vom Platz nach Norden, durch das Rosental, die kleine Straße links vom Stadtmuseum, hundertfünfzig Meter, bis sich der Rindermarkt öffnet und du den Alten Peter wiedersiehst.`},
+{id:17,name:'Rindermarkt',sub:'Kindl, Schmalznudel, Abschluss',lat:48.13624,lng:11.57343,img:'images/s17.jpg',credit:'Fred Romero from Paris, France, CC BY 2.0',
+ text:`Der Rindermarkt, wo im Mittelalter die Ochsen verkauft wurden, heute ein Platz mit einem Brunnen, an dem drei bronzene Rinder liegen, und Kinder sitzen auf ihnen. Das Haus mit der bunten Fassade an der Ecke ist das <strong>Ruffinihaus</strong>, gebaut 1903 bis 1905 von Gabriel von Seidl, dem Mann von den Rundbauten am Stachus, der München sein heutiges Gesicht gegeben hat: gemütlich, verspielt, ein bisschen Dorf in der Großstadt. Schau dir die Fassade an, gemalte Girlanden, Erker, Reliefs mit Handwerkern, und einmal ums Haus herum ändert sich der Stil. Genau so wollte Seidl es: ein Haus, das aussieht, als hätte es hundert Jahre gebraucht. Im Hof dahinter steht der Löwenturm, ein Rest aus dem 12. Jahrhundert, angeblich, und kein Mensch weiß, wozu er gebaut wurde. Wasserturm, Wehrturm, Rest eines Palasts, alles wurde vorgeschlagen.
+Zum Abschluss drei Dinge, die du dir verdient hast. Erstens das <strong>Münchner Kindl</strong>: der kleine Mönch aus dem Wappen, seit dem 13. Jahrhundert, mit erhobener Hand und einem Buch, das im Lauf der Jahrhunderte zum Bierkrug wurde und wieder zum Buch. Aus dem Mönch wurde ein Kind, und beim Wiesn-Einzug reitet seit 1938 ein Mädchen als Kindl voran; das erste war Ellis Kaut, die später den Pumuckl erfand. Zweitens: Das <strong>Café Frischhut</strong> am Viktualienmarkt, zwei Minuten von hier in der Prälat-Zistl-Straße, backt seit Jahrzehnten Schmalznudeln, ausgezogene Hefeteigfladen, im Fett gebacken, mit Zucker, und die Schlange davor gehört zur Stadt. Sie öffnen früh und schließen, wenn der Teig aus ist. Und drittens: ein Bier vom Augustiner, in der Neuhauser Straße oder beim Klosterwirt an der Frauenkirche. Die älteste Brauerei der Stadt, seit 1328, und die einzige, die die Münchner ohne Diskussion als die beste anerkennen.
+Damit ist die Runde zu Ende, hier, hundert Meter vom Marienplatz, wo sie begann. Der Turm über dir ist der Alte Peter, und das Lied, das du gerade noch einmal gehört hast, war sein Lied. Zurück zur U-Bahn geht es über den Marienplatz: Dort fährt die U 3 nach Thalkirchen; nach Riem nimmst du eine Station bis Sendlinger Tor und steigst in die U 2 um. Und wenn du heute noch Kraft hast: Zur Wiesn fährst du vom Odeonsplatz oder vom Stachus mit der U 4 oder U 5 bis Theresienwiese, zwei Stationen, und um halb elf abends ist Schluss mit dem Ausschank. Pfiat di, und komm wieder.`}
+];
+const AUDIO_DUR={"0":148,"1":174,"2":146,"3":178,"4":139,"5":167,"6":195,"7":177,"8":166,"9":170,"10":165,"11":201,"12":170,"13":168,"14":169,"15":157,"16":138,"17":171};
+const NEAR_M=35;          // Autoplay-Radius in Metern
+const LS='muenchen-runde';
+
+// ====== STATE ======
+let state=JSON.parse(localStorage.getItem(LS)||'{}');
+state.visited=state.visited||[];
+state.autoplay=state.autoplay!==false;
+let currentStation=state.current||0;   // Index in STATIONS
+let map,userMarker,routeLine,stationMarkers=[],userPos=null,watchId=null,panelCollapsed=false;
+let audioSpeed=parseFloat(state.speed||1);
+const player=new Audio();player.preload='auto';
+let playing={key:null,rowId:null};
+let autoPlayed=new Set(state.autoPlayed||[]);
+let wakeLock=null;
+function save(){state.current=currentStation;state.visited=[...new Set(state.visited)];state.autoPlayed=[...autoPlayed];state.speed=audioSpeed;localStorage.setItem(LS,JSON.stringify(state))}
+
+// ====== HELPERS ======
+const fmtTime=s=>{s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+function distM(a,b){const R=6371000,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180,la=a.lat*Math.PI/180,lb=b.lat*Math.PI/180;const h=Math.sin(dLat/2)**2+Math.cos(la)*Math.cos(lb)*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+const fmtDist=m=>m<1000?Math.round(m)+' m':(m/1000).toFixed(1).replace('.',',')+' km';
+let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function setIcon(id,name){const u=document.getElementById(id);if(u)u.setAttribute('href','#'+name)}
+
+// ====== START-SCREEN ======
+function renderStartList(){
+  const el=document.getElementById('stationList');
+  el.innerHTML=STATIONS.map((s,i)=>`<button class="st-item ${state.visited.includes(s.id)?'done':''}" onclick="jumpTo(${i})">
+    <div class="num">${state.visited.includes(s.id)?'<svg class="i"><use href="#ic-check"/></svg>':s.id}</div>
+    <div class="t"><b>${s.name}</b><span>${s.sub}</span></div>
+    <span class="dur">${fmtTime(AUDIO_DUR[s.id])}</span></button>`).join('');
+  document.getElementById('resetBtn').style.display=state.visited.length?'block':'none';
+  document.getElementById('credits').innerHTML='Fotos: Wikimedia Commons – '+STATIONS.map(s=>s.credit).filter((c,i,a)=>a.indexOf(c)===i).join(' · ')+' · Titelbild Martin Falbisoner, CC BY-SA 3.0. Klänge: Wikimedia Commons – Glocken der Frauenkirche: Rongaman, CC0 · „Solang der alte Peter“, Tegernseer Ländler-Kapelle Moar jr. (1929), gemeinfrei · Wagner-Ouvertüre (Musopen) und Brautchor, gemeinfrei/CC0 · Zither-Solo, CC0 · Hannerl-Polka: Franz Stremnitzer, CC BY 3.0 · Orgel: Erich Piasetzki, CC BY 1.0 / Wolfram Syré, gemeinfrei · Ambiente: eguobyte, Extemporalist, Felix Blume (CC0), stephan, natalie (gemeinfrei). Karte © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, Stimme: Microsoft Neural (Seraphina). Route: OSRM.';
+}
+function jumpTo(i){currentStation=i;startTour(true)}
+function resetTour(){if(!confirm('Fortschritt wirklich zurücksetzen?'))return;state.visited=[];autoPlayed.clear();currentStation=0;save();renderStartList();toast('Zurückgesetzt')}
+
+// ====== TOUR ======
+function startTour(keepIndex){
+  if(!keepIndex&&!state.visited.length)currentStation=0;
+  // iOS: Audio-Element im Klickmoment freischalten
+  unlockAudio();
+  showScreen('game');
+  initMap();
+  renderStation();
+  startGPS();
+  requestWakeLock();
+  save();
+}
+function leaveTour(){stopAudio();showScreen('start');renderStartList();releaseWakeLock()}
+function unlockAudio(){
+  if(player._unlocked)return;
+  player.src='audio/s'+STATIONS[currentStation].id+'.mp3';
+  const p=player.play();
+  if(p&&p.then)p.then(()=>{player.pause();player.currentTime=0;player._unlocked=true}).catch(()=>{});
+  else{player.pause();player._unlocked=true}
+}
+function navStation(d){const n=currentStation+d;if(n<0||n>=STATIONS.length)return;stopAudio();currentStation=n;renderStation();save()}
+function markVisited(id){if(!state.visited.includes(id)){state.visited.push(id);save();updateMarkers();updateProgress()}}
+function updateProgress(){document.getElementById('progNum').textContent=state.visited.length+'/'+STATIONS.length;document.getElementById('progBar').style.width=(state.visited.length/STATIONS.length*100)+'%'}
+
+function renderStation(){
+  const s=STATIONS[currentStation],i=currentStation;
+  document.getElementById('gameTitle').textContent=s.id+' · '+s.name;
+  document.getElementById('navPrev').disabled=i===0;
+  document.getElementById('navNext').disabled=i===STATIONS.length-1;
+  updateProgress();
+  const last=i===STATIONS.length-1;
+  const paras=s.text.split('\n').map(p=>'<p>'+p+'</p>').join('');
+  document.getElementById('stationContent').innerHTML=`
+    <div class="station-label"><svg class="i"><use href="#ic-pin"/></svg> Station ${s.id} von ${STATIONS.length}</div>
+    <div class="station-name">${s.name}</div>
+    <div class="station-sub">${s.sub}</div>
+    <a class="dist-line" id="distLine" href="https://maps.apple.com/?daddr=${s.lat},${s.lng}&dirflg=w" target="_blank" rel="noopener"><svg class="i"><use href="#ic-nav"/></svg> <span id="distText">Navigation: ${s.name}</span><span class="coords">${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}</span></a>
+    <div class="station-photo-wrapper"><img src="${s.img}" alt="${s.name}" loading="lazy"><div class="photo-overlay"></div><div class="photo-credit">${s.credit}</div></div>
+    <div class="audio-row" id="row-s${s.id}" onclick="playStation(${s.id},'row-s${s.id}')">
+      <div class="audio-icon"><svg class="i"><use href="#ic-play" id="icon-s${s.id}"/></svg></div>
+      <div class="audio-label">Station anhören<span class="audio-sublabel">Erzählerin · ${fmtTime(AUDIO_DUR[s.id])}</span></div>
+      <span class="audio-time" id="time-s${s.id}">0:00 / ${fmtTime(AUDIO_DUR[s.id])}</span>
+      <select class="speed-select" onclick="event.stopPropagation()" onchange="setSpeed(this.value)">${[1,1.25,1.5].map(v=>`<option value="${v}" ${v===audioSpeed?'selected':''}>${v}×</option>`).join('')}</select>
+    </div>
+    <div class="audio-progress" id="prog-s${s.id}"><div class="audio-progress-fill" id="fill-s${s.id}"></div></div>
+    <div class="text-card"><div class="tl"><svg class="i"><use href="#ic-book"/></svg> Zum Mitlesen</div>${paras}</div>
+    <div class="auto-row"><span>Automatisch abspielen, wenn ich ankomme (${NEAR_M} m)</span><div class="switch ${state.autoplay?'on':''}" id="autoSwitch" onclick="toggleAuto()"></div></div>
+    <button class="btn-next ${last?'finish':''}" onclick="${last?'finishTour()':'navStation(1)'}">${last?'<svg class="i"><use href="#ic-flag"/></svg> Runde beenden':'Weiter zu Station '+(s.id+1)+' <svg class="i"><use href="#ic-next"/></svg>'}</button>`;
+  initSeekBar('s'+s.id);
+  syncRowUI();
+  updateMarkers();
+  updateDistance();
+  if(map){map.panTo([s.lat,s.lng],{animate:true});}
+  document.getElementById('gamePanel').scrollTop=0;
+}
+function finishTour(){markVisited(STATIONS[currentStation].id);stopAudio();toast('Runde geschafft – sretan put! 🌊');setTimeout(leaveTour,1200)}
+function toggleAuto(){state.autoplay=!state.autoplay;document.getElementById('autoSwitch').classList.toggle('on',state.autoplay);save();toast(state.autoplay?'Autoplay an':'Autoplay aus')}
+function togglePanel(){panelCollapsed=!panelCollapsed;document.getElementById('gamePanel').classList.toggle('collapsed',panelCollapsed);document.getElementById('fabText').textContent=panelCollapsed?'Text':'Karte';setIcon('fabIcon',panelCollapsed?'ic-text':'ic-map');if(panelCollapsed&&map)setTimeout(()=>{map.invalidateSize();fitCurrent()},380)}
+function fitCurrent(){if(!map)return;const s=STATIONS[currentStation];if(userPos)map.fitBounds([[s.lat,s.lng],[userPos.lat,userPos.lng]],{padding:[60,60],maxZoom:18});else map.setView([s.lat,s.lng],17)}
+
+// ====== AUDIO ======
+function setSpeed(v){audioSpeed=parseFloat(v);player.playbackRate=audioSpeed;save()}
+function playStation(id,rowId){
+  const key='s'+id;
+  if(playing.key===key){
+    if(player.paused)player.play();else player.pause();
+    syncRowUI();return;
+  }
+  stopAudio();
+  playing={key,rowId};
+  player.src='audio/'+key+'.mp3';
+  player.playbackRate=audioSpeed;
+  player.play().then(()=>{player._unlocked=true}).catch(e=>{console.log('play',e);toast('Zum Abspielen bitte einmal tippen');playing={key:null,rowId:null};syncRowUI()});
+  syncRowUI();
+  if(id>0)markVisited(id);
+  if('mediaSession' in navigator){const s=STATIONS.find(x=>x.id===id);navigator.mediaSession.metadata=new MediaMetadata({title:s?s.id+' · '+s.name:'Willkommen',artist:'München-Runde',album:'Audio-Rundgang'})}
+}
+function stopAudio(){player.pause();playing={key:null,rowId:null};syncRowUI()}
+function syncRowUI(){
+  document.querySelectorAll('.audio-row').forEach(r=>{
+    const key=r.id.replace('row-','');
+    const active=playing.key===key&&!player.paused;
+    r.classList.toggle('playing',active);
+    setIcon('icon-'+key,active?'ic-pause':'ic-play');
+  });
+}
+player.addEventListener('timeupdate',()=>{
+  if(!playing.key||!player.duration)return;
+  const f=document.getElementById('fill-'+playing.key);if(f)f.style.width=(player.currentTime/player.duration*100)+'%';
+  const t=document.getElementById('time-'+playing.key);if(t)t.textContent=fmtTime(player.currentTime)+' / '+fmtTime(player.duration);
+});
+player.addEventListener('ended',()=>{const k=playing.key;playing={key:null,rowId:null};syncRowUI();const f=document.getElementById('fill-'+k);if(f)f.style.width='100%';});
+player.addEventListener('play',syncRowUI);player.addEventListener('pause',syncRowUI);
+function initSeekBar(key){
+  const bar=document.getElementById('prog-'+key);if(!bar)return;
+  const seek=e=>{if(playing.key!==key||!player.duration)return;const r=bar.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX);player.currentTime=Math.max(0,Math.min(1,(x-r.left)/r.width))*player.duration};
+  let drag=false;
+  bar.addEventListener('pointerdown',e=>{drag=true;seek(e)});
+  bar.addEventListener('pointermove',e=>{if(drag)seek(e)});
+  window.addEventListener('pointerup',()=>drag=false);
+}
+
+// ====== KARTE ======
+function initMap(){
+  if(map){setTimeout(()=>map.invalidateSize(),200);return}
+  map=L.map('map',{zoomControl:false,attributionControl:true}).setView([45.3160,13.5600],17);
+  map.attributionControl.setPrefix(false);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+  STATIONS.forEach((s,i)=>{
+    const m=L.marker([s.lat,s.lng],{icon:L.divIcon({html:`<div class="st-marker" id="mk-${s.id}">${s.id}</div>`,className:'',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(map);
+    m.bindTooltip(s.name,{direction:'top',offset:[0,-14],className:'station-tooltip'});
+    m.on('click',()=>{stopAudio();currentStation=i;renderStation();save()});
+    stationMarkers.push(m);
+  });
+  routeLine=L.polyline(STATIONS.map(s=>[s.lat,s.lng]).concat([[STATIONS[0].lat,STATIONS[0].lng]]),{color:'#f3632d',weight:3,opacity:.45,dashArray:'6,8'}).addTo(map);
+  fetchWalkingRoute();
+  setTimeout(()=>{map.invalidateSize();updateMarkers()},250);
+}
+async function fetchWalkingRoute(){
+  try{
+    const pts=STATIONS.concat([STATIONS[0]]).map(s=>s.lng+','+s.lat).join(';');
+    const r=await fetch('https://routing.openstreetmap.de/routed-foot/route/v1/foot/'+pts+'?overview=full&geometries=geojson');
+    const d=await r.json();
+    if(d.routes&&d.routes[0]){routeLine.setLatLngs(d.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]));}
+  }catch(e){console.log('Route:',e)}
+}
+function updateMarkers(){STATIONS.forEach((s,i)=>{const el=document.getElementById('mk-'+s.id);if(!el)return;el.classList.toggle('done',state.visited.includes(s.id));el.classList.toggle('current',i===currentStation)})}
+
+// ====== GPS ======
+function startGPS(){
+  if(watchId!==null||!navigator.geolocation){if(!navigator.geolocation)setGps(false,'kein GPS');return}
+  watchId=navigator.geolocation.watchPosition(pos=>{
+    userPos={lat:pos.coords.latitude,lng:pos.coords.longitude,acc:pos.coords.accuracy};
+    if(!userMarker)userMarker=L.marker([userPos.lat,userPos.lng],{icon:L.divIcon({html:'<div class="user-dot"></div>',className:'',iconSize:[16,16],iconAnchor:[8,8]}),zIndexOffset:1000}).addTo(map);
+    else userMarker.setLatLng([userPos.lat,userPos.lng]);
+    setGps(true,'GPS ±'+Math.round(userPos.acc)+' m');
+    updateDistance();
+    checkAutoplay();
+  },err=>{setGps(false,err.code===1?'GPS verweigert':'kein GPS-Signal')},{enableHighAccuracy:true,maximumAge:3000,timeout:20000});
+}
+function setGps(on,txt){document.getElementById('gpsBadge').classList.toggle('on',on);document.getElementById('gpsText').textContent=txt}
+function updateDistance(){
+  const el=document.getElementById('distText'),line=document.getElementById('distLine');if(!el||!userPos)return;
+  const s=STATIONS[currentStation],d=distM(userPos,s);
+  const near=d<=NEAR_M;
+  el.textContent=near?'Du bist da – '+s.name:'Noch '+fmtDist(d)+' bis '+s.name;
+  line.classList.toggle('near',near);
+}
+function checkAutoplay(){
+  if(!state.autoplay||!userPos)return;
+  if(playing.key&&!player.paused)return;               // nie reinreden
+  if(userPos.acc>60)return;                             // zu ungenau
+  let best=null,bd=1e9;
+  STATIONS.forEach((s,i)=>{const d=distM(userPos,s);if(d<=NEAR_M&&!autoPlayed.has(s.id)&&d<bd){best=i;bd=d}});
+  if(best===null)return;
+  autoPlayed.add(STATIONS[best].id);save();
+  if(best!==currentStation){currentStation=best;renderStation()}
+  toast('Station '+STATIONS[best].id+' erreicht – Abspielen');
+  playStation(STATIONS[best].id,'row-s'+STATIONS[best].id);
+}
+
+// ====== WAKE LOCK ======
+async function requestWakeLock(){try{if('wakeLock' in navigator)wakeLock=await navigator.wakeLock.request('screen')}catch(e){}}
+function releaseWakeLock(){try{wakeLock&&wakeLock.release();wakeLock=null}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&document.getElementById('game').classList.contains('active'))requestWakeLock()});
+
+renderStartList();
+</script>
+</body>
+</html>

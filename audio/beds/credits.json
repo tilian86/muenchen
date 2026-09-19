@@ -1,0 +1,138 @@
+{
+ "bells_big": {
+  "title": "20150411Frauenkirche1715 Glocken 10 9 6 4 3 2 1 Osterzeitsamstag.ogg",
+  "license": "CC0",
+  "artist": "Rongaman",
+  "mime": "application/ogg",
+  "dur": "898.299365",
+  "size": 15808
+ },
+ "bells_mid": {
+  "title": "20150414Frauenkirche1715 Glocken 7 5 3 2 1 Domweihe.ogg",
+  "license": "CC0",
+  "artist": "Rongaman",
+  "mime": "application/ogg",
+  "dur": "919.528639",
+  "size": 15866
+ },
+ "bells_small": {
+  "title": "20150227Frauenkirche1720 Glocken 6 5 3.ogg",
+  "license": "CC0",
+  "artist": "Rongaman",
+  "mime": "application/ogg",
+  "dur": "583.078707",
+  "size": 11018
+ },
+ "peter": {
+  "title": "Solang der alte Peter - Volksweise - Tegernseer Ländler - Kapelle Moar Jr. (1929).ogg",
+  "license": "Public domain",
+  "artist": "TEGERNSEE LÄNDLER-KAPELLE Kapellmeister Moar Jr.",
+  "mime": "application/ogg",
+  "dur": "162.750998",
+  "size": 1582
+ },
+ "meistersinger": {
+  "title": "Richard Wagner - die meistersinger von nurnberg - overture.ogg",
+  "license": "Public domain",
+  "artist": "(See Musopen for author information)",
+  "mime": "application/ogg",
+  "dur": "696.163265",
+  "size": 15364
+ },
+ "lohengrin": {
+  "title": "Richard Wagner - Treulich geführt, version 2.ogg",
+  "license": "CC0",
+  "artist": "Richard Wagner",
+  "mime": "application/ogg",
+  "dur": "103.914308",
+  "size": 1950
+ },
+ "zither": {
+  "title": "Zither solo from G'schichten aus dem Wienerwald Op.325.ogg",
+  "license": "CC0",
+  "artist": "Unknown authorUnknown author",
+  "mime": "application/ogg",
+  "dur": "64.051066",
+  "size": 808
+ },
+ "polka": {
+  "title": "Hannerl Polka.ogg",
+  "license": "CC BY 3.0",
+  "artist": "Franz Stremnitzer",
+  "mime": "application/ogg",
+  "dur": "155.640000",
+  "size": 3301
+ },
+ "crowd": {
+  "title": "360703 eguobyte large-crowd-medium-distance-stereo.wav",
+  "license": "CC0",
+  "artist": "eguobyte",
+  "mime": "audio/wav",
+  "dur": "57.184438",
+  "size": 10729
+ },
+ "market": {
+  "title": "Flea market in the rain.ogg",
+  "license": "Public domain",
+  "artist": "stephan",
+  "mime": "application/ogg",
+  "dur": "199.601633",
+  "size": 5299
+ },
+ "mall": {
+  "title": "Shopping mall less crowded.ogg",
+  "license": "Public domain",
+  "artist": "natalie",
+  "mime": "application/ogg",
+  "dur": "30.119184",
+  "size": 811
+ },
+ "river": {
+  "title": "Shallow small river with stony riverbed.ogg",
+  "license": "Public domain",
+  "artist": "stephan",
+  "mime": "application/ogg",
+  "dur": "17.893878",
+  "size": 471
+ },
+ "street": {
+  "title": "Urban Street on a Rainy Afternoon.flac",
+  "license": "CC0",
+  "artist": "Extemporalist",
+  "mime": "audio/x-flac",
+  "dur": "1800.000000",
+  "size": 89050
+ },
+ "sunday": {
+  "title": "Sunday in the center of Mexico City (close to Alameda Park), Schoeps MS Setup.flac",
+  "license": "CC0",
+  "artist": "Felix Blume",
+  "mime": "audio/flac",
+  "dur": "300.032000",
+  "size": 26471
+ },
+ "organ_bach": {
+  "title": "Johann Sebastian Bach first movement Organ Sonata in G major BWV 530 Erich Piasetzki Silbermann-Organ.mp3",
+  "license": "CC BY 1.0",
+  "artist": "Erich Piasetzki, organist",
+  "mime": "audio/mpeg",
+  "dur": "241.466667",
+  "size": 7667
+ },
+ "organ_mend": {
+  "title": "Mendelssohn organ sonata A major op. 65 no. 3 Wolfram Syré.mp3",
+  "license": "Public domain",
+  "artist": "composition: Felix Mendelssohn Bartoldy\n\nrecording (using a ",
+  "mime": "audio/mpeg",
+  "dur": "911.637302",
+  "size": 35613
+ },
+ "eisbach": {
+  "title": "Surfer auf der Eisbachwelle in München, 2023.ogg",
+  "license": "CC BY-SA 4.0",
+  "artist": "Summerbrize",
+  "mime": "application/ogg",
+  "dur": "15.482133",
+  "size": 77071
+ }
+}
